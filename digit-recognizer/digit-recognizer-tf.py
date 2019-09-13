@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from tensorflow.keras import layers
+from tensorflow import keras
 
 sns.set_style("whitegrid")
 
@@ -16,25 +17,21 @@ def show_batch(dataset):
 
 ITERATOR_BATCH_SIZE = 100
 column_defaults = [tf.int32]*785
-train = tf.data.experimental.make_csv_dataset('train.csv', batch_size=10, label_name='label' ,header=True)
+train = tf.data.experimental.make_csv_dataset('train.csv', batch_size=32, label_name='label' ,header=True)
+
 test = tf.data.experimental.make_csv_dataset('test.csv', batch_size=10,header=True)
 
-
-model = tf.keras.Sequential([
-# Adds a densely-connected layer with 64 units to the model:
-layers.Dense(784, activation='relu', input_shape=(28,28,1)),
-# Add another:
-layers.Dense(784, activation='relu'),
-# Add a softmax layer with 10 output units:
-layers.Dense(10, activation='softmax')])
-
-
-
+inputs = keras.Input(shape=(784,))
+dense = layers.Dense(64, activation='relu')
+x = dense(inputs)
+x = layers.Dense(64, activation='relu')(x)
+outputs = layers.Dense(10, activation='softmax')(x)
+model = keras.Model(inputs=inputs, outputs=outputs)
+model.summary()
 model.compile(optimizer=tf.keras.optimizers.Adam(0.01),
-              loss='categorical_crossentropy',
+             loss='categorical_crossentropy',
               metrics=['accuracy'])
-
-sample_count = 42000
-batch_size = 1
-steps_per_epoch = sample_count // batch_size
-model.fit(train, steps_per_epoch=steps_per_epoch,epochs=1)
+history = model.fit(x_train, y_train,
+                    batch_size=64,
+                    epochs=5,
+                    validation_split=0.2)
